@@ -1,3 +1,5 @@
+use std::sync::Mutex;
+
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
 
 #[get("/")]
@@ -26,6 +28,7 @@ async fn monish() -> impl Responder {
 
 struct AppState {
     app_name: String,
+    count: Mutex<i32>,
 }
 
 #[get("/app_name")]
@@ -33,13 +36,24 @@ async fn app_name(data: web::Data<AppState>) -> String {
     format!("Hello {}!", &data.app_name)
 }
 
+#[get("/counter")]
+async fn counter(data: web::Data<AppState>) -> String {
+    let mut counter = data.count.lock().unwrap();
+    *counter += 1;
+    format!("Request number: {counter}")
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| {
+    let app_state = web::Data::new(AppState {
+        app_name: String::from("Actix Web Project"),
+        count: Mutex::new(0),
+    });
+
+    HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(AppState {
-                app_name: String::from("Actix Web Project"),
-            }))
+            .app_data(app_state.clone())
+            .service(counter)
             .service(app_name)
             .service(hello)
             .service(echo)
