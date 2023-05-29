@@ -24,10 +24,23 @@ async fn monish() -> impl Responder {
     HttpResponse::Ok().body("Monish Vijayan")
 }
 
+struct AppState {
+    app_name: String,
+}
+
+#[get("/app_name")]
+async fn app_name(data: web::Data<AppState>) -> String {
+    format!("Hello {}!", &data.app_name)
+}
+
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     HttpServer::new(|| {
         App::new()
+            .app_data(web::Data::new(AppState {
+                app_name: String::from("Actix Web Project"),
+            }))
+            .service(app_name)
             .service(hello)
             .service(echo)
             .route("/hey", web::get().to(manual_hello))
