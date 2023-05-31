@@ -66,7 +66,7 @@ async fn main() -> std::io::Result<()> {
             .route("/hey", web::get().to(manual_hello))
             .service(web::scope("/vijayans").service(suraj).service(monish))
     })
-    .bind("127.0.0.1:5000")?
+    .bind("0.0.0.0:5000")?
     .run()
     .await
 }
