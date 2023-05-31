@@ -47,6 +47,8 @@ async fn counter(data: web::Data<AppState>) -> String {
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+
     let app_state = web::Data::new(AppState {
         app_name: String::from("Actix Web Project"),
         count: Mutex::new(0),
@@ -54,7 +56,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .wrap(Logger::default())
+            .wrap(Logger::new("%t %r %s %b B %D ms"))
             .app_data(app_state.clone())
             .service(nesting())
             .service(counter)
@@ -64,7 +66,7 @@ async fn main() -> std::io::Result<()> {
             .route("/hey", web::get().to(manual_hello))
             .service(web::scope("/vijayans").service(suraj).service(monish))
     })
-    .bind(("127.0.0.1", 5000))?
+    .bind("127.0.0.1:5000")?
     .run()
     .await
 }
