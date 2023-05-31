@@ -1,9 +1,14 @@
 use std::sync::Mutex;
+mod custom_error;
 mod extractors;
 mod nesting;
 mod tls;
 
-use actix_web::{get, middleware::Logger, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{
+    get, http::StatusCode, middleware::Logger, post, web, App, HttpResponse, HttpServer, Responder,
+    Result,
+};
+use custom_error::AppError;
 use nesting::nesting;
 use tls::get_tls_config;
 
@@ -29,6 +34,11 @@ async fn suraj() -> impl Responder {
 #[get("/monish")]
 async fn monish() -> impl Responder {
     HttpResponse::Ok().body("Monish Vijayan")
+}
+
+#[get("/error")]
+async fn throw_error() -> Result<String, AppError> {
+    Err(AppError::new(StatusCode::BAD_GATEWAY, "Bad gateway"))
 }
 
 struct AppState {
@@ -67,6 +77,7 @@ async fn main() -> std::io::Result<()> {
             .service(app_name)
             .service(hello)
             .service(echo)
+            .service(throw_error)
             .route("/hey", web::get().to(manual_hello))
             .service(web::scope("/vijayans").service(suraj).service(monish))
     })
