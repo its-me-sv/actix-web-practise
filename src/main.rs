@@ -1,6 +1,8 @@
 use std::sync::Mutex;
+mod nesting;
 
-use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, middleware::Logger, post, web, App, HttpResponse, HttpServer, Responder};
+use nesting::nesting;
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -52,13 +54,15 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .wrap(Logger::default())
             .app_data(app_state.clone())
+            .service(nesting())
             .service(counter)
             .service(app_name)
             .service(hello)
             .service(echo)
             .route("/hey", web::get().to(manual_hello))
-            .service(web::scope("vijayans").service(suraj).service(monish))
+            .service(web::scope("/vijayans").service(suraj).service(monish))
     })
     .bind(("127.0.0.1", 5000))?
     .run()
