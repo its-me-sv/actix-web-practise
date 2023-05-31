@@ -1,4 +1,5 @@
 use std::sync::Mutex;
+mod extractors;
 mod nesting;
 mod tls;
 
@@ -60,6 +61,7 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(Logger::new("%t %r %s %b B %D ms"))
             .app_data(app_state.clone())
+            .service(extractors::extractors())
             .service(nesting())
             .service(counter)
             .service(app_name)
