@@ -1,8 +1,10 @@
 use std::sync::Mutex;
 mod nesting;
+mod tls;
 
 use actix_web::{get, middleware::Logger, post, web, App, HttpResponse, HttpServer, Responder};
 use nesting::nesting;
+use tls::get_tls_config;
 
 #[get("/")]
 async fn hello() -> impl Responder {
@@ -66,7 +68,8 @@ async fn main() -> std::io::Result<()> {
             .route("/hey", web::get().to(manual_hello))
             .service(web::scope("/vijayans").service(suraj).service(monish))
     })
-    .bind("0.0.0.0:5000")?
+    .bind_rustls("0.0.0.0:5000", get_tls_config())?
+    .bind("0.0.0.0:5001")?
     .run()
     .await
 }
