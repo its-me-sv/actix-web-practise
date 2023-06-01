@@ -1,5 +1,6 @@
 use std::sync::Mutex;
 mod custom_error;
+mod custom_middleware;
 mod extractors;
 mod nesting;
 mod tls;
@@ -10,6 +11,7 @@ use actix_web::{
     HttpServer, Responder, Result,
 };
 use custom_error::AppError;
+use custom_middleware::Authorization;
 use nesting::nesting;
 use tls::get_tls_config;
 
@@ -70,6 +72,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .wrap(Authorization)
             .wrap(Cors::default().allow_any_origin())
             .wrap(Logger::new("%t %r %s %b B %D ms"))
             .wrap_fn(|req, srv| {
