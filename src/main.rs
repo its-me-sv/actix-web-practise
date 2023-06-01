@@ -4,6 +4,7 @@ mod extractors;
 mod nesting;
 mod tls;
 
+use actix_cors::Cors;
 use actix_web::{
     get, http::StatusCode, middleware::Logger, post, web, App, HttpResponse, HttpServer, Responder,
     Result,
@@ -69,6 +70,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .wrap(Cors::default().allow_any_origin())
             .wrap(Logger::new("%t %r %s %b B %D ms"))
             .app_data(app_state.clone())
             .service(extractors::extractors())
