@@ -6,8 +6,8 @@ mod tls;
 
 use actix_cors::Cors;
 use actix_web::{
-    get, http::StatusCode, middleware::Logger, post, web, App, HttpResponse, HttpServer, Responder,
-    Result,
+    dev::Service, get, http::StatusCode, middleware::Logger, post, web, App, HttpResponse,
+    HttpServer, Responder, Result,
 };
 use custom_error::AppError;
 use nesting::nesting;
@@ -72,6 +72,10 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .wrap(Cors::default().allow_any_origin())
             .wrap(Logger::new("%t %r %s %b B %D ms"))
+            .wrap_fn(|req, srv| {
+                println!("Hello i'm under the water");
+                srv.call(req)
+            })
             .app_data(app_state.clone())
             .service(extractors::extractors())
             .service(nesting())
