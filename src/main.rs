@@ -1,6 +1,7 @@
 use std::{str::FromStr, sync::Mutex};
 mod custom_error;
 mod custom_middleware;
+mod data_fetcher;
 mod extractors;
 mod from_db;
 mod nesting;

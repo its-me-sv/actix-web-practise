@@ -1,13 +1,12 @@
 use actix_web::{
     get,
-    http::StatusCode,
     web::{Data, Json},
     Result,
 };
 use serde::Serialize;
-use stargate_grpc::{Query, ResultSet, StargateClient, TryFromRow};
+use stargate_grpc::{Query, StargateClient, TryFromRow};
 
-use crate::custom_error::AppError;
+use crate::{custom_error::AppError, data_fetcher::cql_query};
 
 #[derive(TryFromRow, Serialize)]
 struct GeneralStat {
@@ -27,26 +26,7 @@ async fn fetch_from_db(pool: Data<StargateClient>) -> Result<Json<FromDBResponse
         .keyspace("portfolio")
         .query("SELECT * FROM general_stat;")
         .build();
-    let data: ResultSet = (**pool)
-        .clone()
-        .execute_query(query)
-        .await
-        .map_err(|_| AppError::new(StatusCode::BAD_REQUEST, "Some error occured 1"))?
-        .try_into()
-        .map_err(|_| AppError::new(StatusCode::BAD_REQUEST, "Some error occured 2"))?;
-    let mapper = data
-        .mapper()
-        .map_err(|_| AppError::new(StatusCode::BAD_REQUEST, "Some error occured 3"))?;
-    let rows = data
-        .rows
-        .iter()
-        .map(|row| {
-            mapper
-                .try_unpack(row.to_owned())
-                .map_err(|_| AppError::new(StatusCode::BAD_REQUEST, "Some error occured 4"))
-                .unwrap()
-        })
-        .collect::<Vec<GeneralStat>>();
-    let response = FromDBResponse { rows };
+    let data = cql_query::<GeneralStat>(&pool, query.clone()).await?;
+    let response = FromDBResponse { rows: data.rows };
     Ok(Json(response))
 }
