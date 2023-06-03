@@ -12,8 +12,9 @@ use actix_web::{
     dev::Service, get, http::StatusCode, middleware::Logger, post, web, App, HttpResponse,
     HttpServer, Responder, Result,
 };
+use actix_web_lab::middleware::from_fn;
 use custom_error::AppError;
-use custom_middleware::Authorization;
+use custom_middleware::{my_authenticator, Authorization};
 use dotenvy::{dotenv, var as get_env};
 use from_db::fetch_from_db;
 use nesting::nesting;
@@ -95,6 +96,7 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .wrap(from_fn(my_authenticator))
             .app_data(web::Data::new(astra_client.clone()))
             // .app_data(app_state.clone())
             .wrap(Authorization)

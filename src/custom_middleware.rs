@@ -1,7 +1,9 @@
 use actix_web::{
+    body::MessageBody,
     dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform},
-    error, Error,
+    error, Error, Result,
 };
+use actix_web_lab::middleware::Next;
 use std::{
     future::{self, ready, Ready},
     pin::Pin,
@@ -64,5 +66,28 @@ where
         } else {
             Box::pin(async { Err(error::ErrorUnauthorized("Token not found")) })
         }
+    }
+}
+
+pub async fn my_authenticator(
+    req: ServiceRequest,
+    next: Next<impl MessageBody>,
+) -> Result<ServiceResponse<impl MessageBody>> {
+    if let Some(token) = req.headers().get("Authorization") {
+        let token = token
+            .to_str()
+            .map_err(|_| error::ErrorUnauthorized("Invalid token"))
+            .unwrap()
+            .split("Bearer")
+            .collect::<Vec<&str>>()
+            .get(1)
+            .unwrap_or(&"")
+            .trim();
+        if token != "123456" {
+            return Err(error::ErrorUnauthorized("Invalid token"));
+        }
+        next.call(req).await
+    } else {
+        Err(error::ErrorUnauthorized("Token not found"))
     }
 }
